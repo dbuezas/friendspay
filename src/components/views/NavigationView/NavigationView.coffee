@@ -73,7 +73,7 @@ define [
             @_lastViewDidShow = currentViewDidShow
 
         backNowOrNever: ->
-            @back() if @_lastViewDidShow.isResolved()
+            @back() if @_lastViewDidShow.state() is "resolved"
 
         back: ->
             currentViewDidShow = new $.Deferred()
