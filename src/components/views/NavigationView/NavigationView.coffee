@@ -149,7 +149,7 @@ define [
                     @_visibleView.viewDidAppear?()
 
                     do =>
-                        # Hack to force a repaint (https://jira.intranet.doccheck.ag/browse/AVON-220)
+                        # Hack to force a repaint
                         # http://stackoverflow.com/a/3485654/719141
                         @_containers.visible[0].style.display = 'none'
                         @_containers.visible[0].offsetHeight # no need to store this anywhere, getting it is enough
