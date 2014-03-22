@@ -21,9 +21,14 @@ define [
             #Init db connection
             @remoteCouch = 'http://friendspay.iriscouch.com/todos'
             @db = new PouchDB('todos')
-            debugger
-            @db.sync @remoteCouch,
-                onChange: => console.log arguments
+            PouchDB.sync @remoteCouch, @db,
+                onChange: =>
+                    console.log arguments
+                    @db.get("texts").then (result) =>
+                        @input.doc = result;
+                        @input.text(result.text)
+                onComplete: => console.log arguments
+                continuous: true
             window.culo = @
 
             # Set up the header label:
