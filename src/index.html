@@ -1,0 +1,35 @@
+<!-- TODO: add viewy to bower.json -->
+<!doctype html>
+    <head>
+        <title>MSDM App</title>
+
+        <!-- Meta Information -->
+
+        <!-- Enable UTF-8 character encoding -->
+        <meta charset="utf-8">
+        <!-- Fit the document into the device's screen (no scrolling) and disable scaling -->
+        <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1">
+
+        <!-- CSS Includes -->
+
+        <!-- Common -->
+        <link rel="stylesheet" href="components/vendor/normalize.css/normalize.css">
+        <link rel="stylesheet" href="styles/fonts.css">
+        <link rel="stylesheet" href="styles/index.css">
+
+        <!-- View CSS files are being loaded dynamically via require-css loader plugin -->
+
+        <!-- JavaScript files are being loaded dynamically via requirejs -->
+
+    </head>
+    <body>
+        <!-- Start DOM -->
+        <div data-view-name="root">
+            <!-- Element in which the root view will be loaded to -->
+        </div>
+        <!-- END DOM -->
+
+        <!-- Include requirejs and tell it to initially load the index script representing the application entry point -->
+        <script data-main="scripts/index" src="components/vendor/requirejs/require.js"></script>
+</body>
+</html>

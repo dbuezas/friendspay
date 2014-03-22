@@ -1,0 +1,15 @@
+[data-view-bundle="Library/ProgressBarView"] {
+    border: 1px solid black;
+    -webkit-transform: translateZ(0); // enable hardware acceleration
+
+    > .bar {
+        -webkit-transform: scale(0, 1);
+        -webkit-transform-origin-x: left;
+        -webkit-transition: -webkit-transform .5s;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        background-color: #13bf11;
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
+    }
+}

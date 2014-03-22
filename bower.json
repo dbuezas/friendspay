@@ -1,0 +1,10 @@
+{
+  "name": "friendspay",
+  "private": true,
+  "dependencies": {
+    "jquery": "~2.0.3",
+    "iscroll": "~5.1.1",
+    "normalize.css": "~3.0.0"
+  },
+  "devDependencies": {}
+}

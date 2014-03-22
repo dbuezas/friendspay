@@ -1,0 +1,34 @@
+.InputView() {
+    border: none;
+
+    > input {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        -webkit-box-sizing: border-box;
+        outline: none;
+        padding: 10px;
+        margin: 0;
+        border: 1px solid #d5d5d5;
+        border-radius: 0;
+        -webkit-appearance: none;
+        font-size: 20px;
+
+        &:focus {
+            outline: none;
+        }
+    }
+
+    &[data-enabled="no"] {
+        cursor: default;
+        opacity: .4;
+
+        > input {
+            pointer-events: none;
+        }
+    }
+}
+
+[data-view-bundle="Library/InputView"] {
+    .InputView();
+}

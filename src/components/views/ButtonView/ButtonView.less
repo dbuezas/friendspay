@@ -1,0 +1,30 @@
+.ButtonView() {
+    display: -webkit-box;
+    -webkit-box-align: center; // center content vertically
+    -webkit-box-pack: center; // center content horizontally
+    -webkit-transition: all .2s;
+    -webkit-transform: translateZ(0) scale(1); // enable hardware acceleration
+    padding: 10px; // avoid setting min-height as it will influence other elements when pushed
+
+    &[data-enabled="yes"] {
+        cursor: pointer;
+    }
+
+    &[data-enabled="no"] {
+        pointer-events: none;
+        cursor: default;
+        opacity: .4;
+    }
+
+    &[data-enabled="yes"][data-pushed="yes"] {
+        -webkit-transform: scale(.95);
+    }
+
+    &[data-selected="yes"] {
+        background-color: orange;
+    }
+}
+
+[data-view-bundle="Library/ButtonView"] {
+    .ButtonView();
+}
