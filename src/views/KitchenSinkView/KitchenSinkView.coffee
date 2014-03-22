@@ -19,9 +19,12 @@ define [
             @bundle KitchenSinkViewModule.id
 
             #Init db connection
+            @remoteCouch = 'http://friendspay.iriscouch.com/todos'
             @db = new PouchDB('todos')
+            debugger
+            @db.sync @remoteCouch,
+                onChange: => console.log arguments
             window.culo = @
-            @remoteCouch = 'http://friendspay.iriscouch.com/'
 
             # Set up the header label:
             @header = new LabelView
@@ -43,18 +46,17 @@ define [
                 parentView: @
                 name: 'input'
                 onDone: =>
-                    todo =
-                        _id: 'culo'
-                        title: @input.text()
-                        completed: false
-                    @db.put(todo).then (result) =>
-                        console.log(result)
+                    @input.doc = @input.doc or {}
+                    @input.doc.text = @input.text()
+                    @db.put(@input.doc, "texts").then (result) =>
+                        @input.doc._rev = result._rev
                     .catch =>
                         debugger
 
 
-            @db.allDocs().then (result) =>
-                @input.text(result)
+            @db.get("texts").then (result) =>
+                @input.doc = result;
+                @input.text(result.text)
             .catch =>
                 debugger
 

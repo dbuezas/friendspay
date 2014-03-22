@@ -117,7 +117,6 @@ define [
                 if invertAnimation
                     [oldGoesTo, newComesFrom] = [newComesFrom, oldGoesTo]
 
-                console.log 2
                 # Set containers' initial positions.
                 @_containers.visible.removeClass("animated")
                     .attr("data-position", "center")
@@ -131,7 +130,6 @@ define [
                         .attr("data-position", oldGoesTo);
                     @_containers.hidden.toggleClass("animated", animated)
                         .attr("data-position", "center");
-                    console.log @_containers.visible[0].outerHTML
                 , 0
 
                 onTransitionEndCallback = =>
