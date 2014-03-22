@@ -24,6 +24,7 @@ define ->
             'jquery':    'components/vendor/jquery/jquery'
             'iscroll':   'components/vendor/iscroll/build/iscroll'
             'View':      'components/utils/view'
+            'PouchDB':   'components/vendor/pouchdb/dist/pouchdb-nightly'
             # 'View':      'components/vendor/view/src/view'
 
             # Utilities:

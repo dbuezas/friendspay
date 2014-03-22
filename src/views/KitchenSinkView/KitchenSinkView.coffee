@@ -1,5 +1,6 @@
 define [
     'View'
+    'PouchDB'
     'Library/LabelView'
     'Library/InputView'
     'Library/ButtonView'
@@ -8,7 +9,7 @@ define [
     'Library/ListView'
     'Library/NavigationView'
     'module'
-], (View, LabelView, InputView, ButtonView, ToggleButtonView, ProgressBarView, ListView, NavigationView, KitchenSinkViewModule) ->
+], (View, PouchDB, LabelView, InputView, ButtonView, ToggleButtonView, ProgressBarView, ListView, NavigationView, KitchenSinkViewModule) ->
 
     class KitchenSinkView extends View
         constructor: (config) ->
