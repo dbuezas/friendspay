@@ -18,6 +18,11 @@ define [
             config = config or {}
             @bundle KitchenSinkViewModule.id
 
+            #Init db connection
+            @db = new PouchDB('todos')
+            window.culo = @
+            @remoteCouch = 'http://friendspay.iriscouch.com/'
+
             # Set up the header label:
             @header = new LabelView
                 parentView: @
@@ -38,7 +43,20 @@ define [
                 parentView: @
                 name: 'input'
                 onDone: =>
-                    console.log @input.text()
+                    todo =
+                        _id: 'culo'
+                        title: @input.text()
+                        completed: false
+                    @db.put(todo).then (result) =>
+                        console.log(result)
+                    .catch =>
+                        debugger
+
+
+            @db.allDocs().then (result) =>
+                @input.text(result)
+            .catch =>
+                debugger
 
             # Set up toggle button:
             @toggle = new ToggleButtonView
