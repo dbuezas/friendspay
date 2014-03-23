@@ -23,10 +23,16 @@ define [
             @db = new PouchDB('todos')
             PouchDB.sync @remoteCouch, @db,
                 onChange: =>
-                    console.log arguments
+
                     @db.get("texts").then (result) =>
                         @input.doc = result;
                         @input.text(result.text)
+                        @list.viewForIndex (i) =>
+                            if result.users[i]?
+                                new InputView
+                                    text: result.users[i]
+
+
                 onComplete: => console.log arguments
                 continuous: true
             window.culo = @
@@ -62,6 +68,10 @@ define [
             @db.get("texts").then (result) =>
                 @input.doc = result;
                 @input.text(result.text)
+                @list.viewForIndex (i) =>
+                    if result.users[i]?
+                        new InputView
+                            text: result.users[i]
             .catch =>
                 debugger
 

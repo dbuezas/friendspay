@@ -108,7 +108,7 @@ define [
                 sy = startEvent.pageY or startEvent.touches[0].pageY
                 @$().attr 'data-pushed', 'yes'
 
-                @_onPushCallbacks.fire @
+                @_onPushCallbacks.fireWith @
 
                 $document.on @_$moveEventName, (event) =>
                     endEvent = event.originalEvent
@@ -122,7 +122,7 @@ define [
                 @$().on @_$endEventName, (event) =>
                     @$().attr 'data-pushed', 'no'
 
-                    @_onReleaseCallbacks.fire @
+                    @_onReleaseCallbacks.fireWith @
 
                     $document.off @_$moveEventName
                     @$().off @_$endEventName

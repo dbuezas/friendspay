@@ -3,7 +3,7 @@
 define ->
 
     # Module id of the first view to be loaded as the root view:
-    ROOT_VIEW = 'KitchenSinkView' # MainView
+    ROOT_VIEW = 'FriendsView' # MainView
 
     # CTS file to be used throughout the entire app:
     TEXT_SHEET = 'res/texts_de.cts'
@@ -47,6 +47,8 @@ define ->
 
             # App Specific:
             'KitchenSinkView': 'views/KitchenSinkView/KitchenSinkView'
+            'FriendsView': 'views/FriendsView/FriendsView'
+            'DialerView': 'views/DialerView/DialerView'
 
         shim:
             'iscroll':

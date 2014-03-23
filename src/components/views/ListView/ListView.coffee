@@ -39,7 +39,7 @@ define [
                 childViewsDidLoad = []
 
                 # Fetch views until undefined or null is received:
-                while (view = @_viewForIndex(++index))?
+                while (view = @viewForIndex()(++index))?
 
                     # Create container and add child view:
                     view.name(view.name() or 'entry' + index)
