@@ -1,0 +1,22 @@
+@import (reference) "../../styles/index.less";
+
+[data-view-bundle="FriendsView"] {
+    .stretchToContainer();
+    color: black;
+    padding: 10px;
+    > * {
+        position: relative;
+        font-size: 30px;
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+    [data-view-name="list"] {
+        height: 60%;
+    }
+    [data-view-name="dialer"] {
+        height: 40%;
+    }
+}

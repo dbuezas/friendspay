@@ -25,11 +25,13 @@ define [
             if @isLoaded()
 
                 @_scroll ?= new IScroll @$()[0],
-                    mouseWheel: true
-                    scrollbars: true
-                    handleClick: false
-                    bounce: false
-                    useTransitions: true
+                    mouseWheel: on
+                    scrollbars: on
+                    handleClick: off
+                    bounce: off
+                    useTransitions: on
+                    preventDefault: on
+
 
                 # Purge child views and DOM:
                 @removeAllChildViews()

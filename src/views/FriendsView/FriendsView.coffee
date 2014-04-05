@@ -2,10 +2,11 @@ define [
     'View'
     'PouchDB'
     'Library/ListView'
-    'Library/LabelView'
+    'Library/ButtonView'
     'DialerView'
+    'FriendEntryView'
     'module'
-], (View, PouchDB, ListView, LabelView, DialerView, FriendsViewModule) ->
+], (View, PouchDB, ListView, ButtonView, DialerView, FriendEntryView, FriendsViewModule) ->
 
     class FriendsView extends View
         constructor: (config) ->
@@ -46,31 +47,36 @@ define [
 
                 allFriends = doc.friends[@config.user]
                 matcher = (terms, name) =>
-                    t = terms[0]
-                    return name if !t?
-                    ts = terms.slice(1)
+                    #e.g:
+                    # terms = ['def', 'abc']
+                    # name = 'Emmet Brown' returns '(E)mmet (B)rown'
+                    # name = 'Mc Fly' returns null
 
-                    result = no
-                    t.split("").some (char) =>
-                        matchPos = name.toLowerCase().indexOf(char)
+                    return name if terms.length is 0 #no more terms to match, we're done
+                    for char in terms[0]
+                        matchPos = name.toLowerCase().indexOf char
+                        continue if matchPos is -1 #this char doesn't match, try the next one
+                        tail = matcher terms[1..], name[matchPos+1..]
+                        continue if tail is null #char found but following terms don't match, try next char
+                        return name[...matchPos] + '<b>'+name[matchPos]+'</b>' + tail
+                    null
 
-                        if matchPos is -1
-                            no
-                        else
-                            next = matcher(ts, name.slice(matchPos+1))
-                            if next is no
-                                return no
-                            else
-                                result = name.slice(0,matchPos) + '('+name[matchPos]+')' + next
-                                return yes
-                    return result
-                matchedFrieds = allFriends.map (friend) =>
-                    matcher(fuzzyTerms, friend)
-                .filter (match) => match isnt no
+                matchedFrieds = allFriends
+                    .map (friend) => matcher(fuzzyTerms, friend)
+                    .filter (match) => match?
 
                 @list.viewForIndex (i) =>
                     if (friend = matchedFrieds[i])?
-                        new LabelView
-                            text: friend
+                        new ButtonView
+                            label: friend
+                            onRelease: =>
+                                @.parentView().showNowOrNever
+                                    view: new FriendsView
+                                    transitionStyle: 'fromRight'
+
+                @dialer.buttons.forEach (button) =>
+                    button.enabled allFriends.some (friend) =>
+                        matcher(fuzzyTerms.concat(button.label().text()), friend)?
+
             , (err) =>
                 console.log err if err?

@@ -3,7 +3,7 @@
 define ->
 
     # Module id of the first view to be loaded as the root view:
-    ROOT_VIEW = 'FriendsView' # MainView
+    ROOT_VIEW = 'MainView' # MainView
 
     # CTS file to be used throughout the entire app:
     TEXT_SHEET = 'res/texts_de.cts'
@@ -25,6 +25,7 @@ define ->
             'iscroll':   'components/vendor/iscroll/build/iscroll'
             'View':      'components/utils/view'
             'PouchDB':   'components/vendor/pouchdb/dist/pouchdb-nightly'
+            'd3':        'components/vendor/d3/d3'
             # 'View':      'components/vendor/view/src/view'
 
             # Utilities:
@@ -47,8 +48,13 @@ define ->
 
             # App Specific:
             'KitchenSinkView': 'views/KitchenSinkView/KitchenSinkView'
+            'MainView': 'views/MainView/MainView'
             'FriendsView': 'views/FriendsView/FriendsView'
             'DialerView': 'views/DialerView/DialerView'
+            'FriendEntryView': 'views/FriendEntryView/FriendEntryView'
+            'FriendEntryView1': 'views/FriendEntryView1/FriendEntryView1'
+            'FriendEntryView2': 'views/FriendEntryView2/FriendEntryView2'
+            'FriendEntryView3': 'views/FriendEntryView3/FriendEntryView3'
 
         shim:
             'iscroll':

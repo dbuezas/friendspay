@@ -18,7 +18,7 @@ define [
             @bundle DialerViewModule.id
 
             _this = this
-            buttonNames.forEach (buttonName) =>
+            @buttons = buttonNames.map (buttonName) =>
                 new ButtonView
                     parentView: @
                     name: buttonName
