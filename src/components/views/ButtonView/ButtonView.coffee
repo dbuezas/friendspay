@@ -113,7 +113,7 @@ define [
                     ex = endEvent.pageX or endEvent.touches[0].pageX
                     ey = endEvent.pageY or endEvent.touches[0].pageY
                     if (sx - ex) ** 2 + (sy - ey) ** 2 > 10 ** 2
-                        @$().attr 'data-pushed', 'no'
+                        @$().attr 'data-pushed', 'no' if @isLoaded()
                         document.removeEventListener "touchmove", move
                         document.removeEventListener "mousemove", move
                         document.removeEventListener 'touchend', end

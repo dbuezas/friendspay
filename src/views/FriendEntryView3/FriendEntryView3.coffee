@@ -87,7 +87,7 @@ define [
                             cy: pos.y
                             r: 5
                     else
-                        total = 4 * α / τ
+                        total = 5 * α / τ
                         angles = [0..total].map (i) => i*α / total
                         angles.push α
                         console.log angles
