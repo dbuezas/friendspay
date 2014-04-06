@@ -95,6 +95,7 @@ define [
             # Load view into the container that is about to appear:
             transitionSettings.view.name @_containers.hidden.attr("data-view-name")
 
+            transitionSettings.view.parentView(@)
             transitionSettings.view.onViewDidLoad().once =>
                 # Notify views of the appear/disappear that's going to happen soon:
                 @_visibleView?.viewWillDisappear?()
@@ -142,7 +143,7 @@ define [
                     # Notify views of the appear/disappear has happened just now:
                     if hiddenView?
                         hiddenView.viewDidDisappear?()
-                        hiddenView.removeFromParentView() #also unloads view
+                        hiddenView.parentView(null) #also unloads view
 
                     @_visibleView.viewDidAppear?()
 
@@ -162,7 +163,6 @@ define [
 
                 # Unfortunately transitionEnd is buggy and wont get fired every time, so we use timeouts.
                 setTimeout(onTransitionEndCallback, if animated then 400 else 0)
-            @addChildView(transitionSettings.view)
 
         _backNow: (currentViewDidShow) ->
             # Discard current view and all not tracked views

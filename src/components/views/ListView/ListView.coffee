@@ -32,9 +32,9 @@ define [
                     useTransitions: on
                     preventDefault: on
 
-
                 # Purge child views and DOM:
-                @removeAllChildViews()
+                while (@childViews().length)
+                    @childViews()[0].parentView null
                 @$('.scroll').empty()
 
                 index = -1
@@ -48,7 +48,7 @@ define [
                     container = $('<div data-view-name="' + view.name() + '" />')
                     @$('.scroll').append container
                     childViewsDidLoad.push view.onViewDidLoad().promise()
-                    @addChildView view
+                    view.parentView(@)
 
                 # Wait for all views to be loaded (only then their height will be known, which is relevant for iScroll to know)
                 $.when.apply($, childViewsDidLoad).then =>
