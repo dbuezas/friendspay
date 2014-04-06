@@ -4,9 +4,9 @@ define [
     'Library/ListView'
     'Library/ButtonView'
     'DialerView'
-    'FriendEntryView'
+    'FriendEntryView3'
     'module'
-], (View, PouchDB, ListView, ButtonView, DialerView, FriendEntryView, FriendsViewModule) ->
+], (View, PouchDB, ListView, ButtonView, DialerView, FriendEntryView3, FriendsViewModule) ->
 
     class FriendsView extends View
         constructor: (config) ->
@@ -46,17 +46,17 @@ define [
                 # todo: do this directly as a DB View?
 
                 allFriends = doc.friends[@config.user]
-                matcher = (terms, name) =>
+                matcher = ([term,terms...], name) =>
                     #e.g:
                     # terms = ['def', 'abc']
                     # name = 'Emmet Brown' returns '(E)mmet (B)rown'
                     # name = 'Mc Fly' returns null
 
-                    return name if terms.length is 0 #no more terms to match, we're done
-                    for char in terms[0]
+                    return name unless term? #no more terms to match, we're done
+                    for char in term
                         matchPos = name.toLowerCase().indexOf char
                         continue if matchPos is -1 #this char doesn't match, try the next one
-                        tail = matcher terms[1..], name[matchPos+1..]
+                        tail = matcher terms, name[matchPos+1..]
                         continue if tail is null #char found but following terms don't match, try next char
                         return name[...matchPos] + '<b>'+name[matchPos]+'</b>' + tail
                     null
