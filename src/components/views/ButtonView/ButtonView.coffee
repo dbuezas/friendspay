@@ -99,33 +99,41 @@ define [
 
             startEvent = {}
             $document = $ document
-
-            @$().on @_$startEventName, (event) =>
+            start = (startEvent) =>
                 return unless @enabled()
-
-                startEvent = event.originalEvent
                 sx = startEvent.pageX or startEvent.touches[0].pageX
                 sy = startEvent.pageY or startEvent.touches[0].pageY
                 @$().attr 'data-pushed', 'yes'
 
                 @_onPushCallbacks.fireWith @
-
-                $document.on @_$moveEventName, (event) =>
-                    endEvent = event.originalEvent
+                setTimeout =>
+                    move pageX: Number.MAX_VALUE, pageY:Number.MAX_VALUE
+                , 1000
+                move = (endEvent) =>
                     ex = endEvent.pageX or endEvent.touches[0].pageX
                     ey = endEvent.pageY or endEvent.touches[0].pageY
-                    if Math.pow(sx - ex, 2) + Math.pow(sy - ey, 2) > Math.pow(10, 2)
+                    if (sx - ex) ** 2 + (sy - ey) ** 2 > 10 ** 2
                         @$().attr 'data-pushed', 'no'
-                        $document.off @_$moveEventName
-                        @$().off @_$endEventName
+                        document.removeEventListener "touchmove", move
+                        document.removeEventListener "mousemove", move
+                        document.removeEventListener 'touchend', end
+                        document.removeEventListener 'mouseup', end
+                document.addEventListener "touchmove", move
+                document.addEventListener "mousemove", move
 
-                @$().on @_$endEventName, (event) =>
+
+                end = () =>
                     @$().attr 'data-pushed', 'no'
-
                     @_onReleaseCallbacks.fireWith @
+                    document.removeEventListener 'touchend', end
+                    document.removeEventListener 'mouseup', end
 
-                    $document.off @_$moveEventName
-                    @$().off @_$endEventName
+                document.addEventListener 'touchend', end
+                document.addEventListener 'mouseup', end
+
+
+            @$()[0].addEventListener "touchstart", start
+            @$()[0].addEventListener "mousedown", start
 
         viewWillUnload: ->
             @$().off '.ButtonView'
