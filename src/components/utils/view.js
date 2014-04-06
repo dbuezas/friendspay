@@ -8,7 +8,7 @@
  *  # viewy-view
  *    - JavaScript library that facilitates development of large scale client-side web applications with rich user interfaces
  *    - introduces a structural/architectural abstraction layer on top of common client-side web technology (HTML/CSS/JS)
- *    - inspired by and built around concepts found in native UI development
+ *    - inspired by and built upon concepts found in native UI development
  *
  *  ## Concept
  *
@@ -34,28 +34,18 @@
  *    - lifecycle: a view has a lifecycle (construction/instantiation, loading, [showing, hiding, doing stuff], unloading, deallocation)
  *    - memory management
  *
- *  @author Andreas Tietz
+ *  @author Andreas Tietz, David Buezas
  *  @module viewy-view
  *  @requires requirejs, jquery
  */
-(function (factory) {
-    'use strict';
 
-    // Define this module and it's dependencies via RequireJS if possible:
-    if (typeof define === 'function' && define.amd) {
-        define(['jquery'], factory);
-    // Otherwise export to node if possible:
-    } else if (typeof module === 'object' && module.exports) {
-        module.exports = factory(jQuery);
-    // Otherwise define in the global scope:
-    } else {
-        window.View = factory(jQuery);
-    }
-}(function ($) {
+// Define this module and it's dependencies solely via RequireJS because we depend on it:
+define(['jquery'], function ($) {
     'use strict';
 
     /**
-     *  Base implementation of a view controller providing scoped and configurable behavior across all instances of a view component.
+     *  Base implementation of a view controller providing scoped and
+     *  configurable behavior across all instances of a view component.
      *
      *  @class View
      *  @constructor
@@ -69,12 +59,17 @@
         // Initially assign properties from config:
         self.name(config.name);
         self.bundle(config.bundle);
-        self.parentView(config.parentView);
         self.childViews(config.childViews);
+        self.onChildViewsWillLoad().subscribe(config.onChildViewsWillLoad);
+        self.onChildViewsWillLoad().subscribe(self.childViewsWillLoad);
         self.onViewDidLoad().subscribe(config.onViewDidLoad);
         self.onViewDidLoad().subscribe(self.viewDidLoad);
         self.onViewWillUnload().subscribe(config.onViewWillUnload);
         self.onViewWillUnload().subscribe(self.viewWillUnload);
+
+        // Set the parent view last because the view might be loaded
+        // immediately if its parent view is already loaded:
+        self.parentView(config.parentView, true);
     }
 
     /*
@@ -84,17 +79,23 @@
     /**
      *  Helper function that facilitates prototypal inheritance from Views.
      *
-     *  Note: Assign a name to the passed in constructor function in order for it to be correctly printed out in console logs.
+     *  - <b>fully compatible with CoffeeScript classes</b>
+     *  - a default constructor that only calls the super implementation is generated if not provided
+     *  - additionally this.super represents the prototype object that has been inherited from
+     *
+     *  <b>Note: Assign a name to the passed in constructor function in order
+     *  for it to be correctly printed out in console logs and stack traces.</b>
      *
      *  @method extend
-     *  @param {Mixed} [extension] Prototype attributes and methods being added to the view prototype to be inherited from.
+     *  @param {Mixed} [extension] Prototype attributes and methods being added
+     *                             to the view prototype to be inherited from.
      *  @return {Function} Constructor of the extended/inherited view.
      *  @example
      *      var MyView = View.prototype.extend({
-     *          constructor: function MyView (config) {..},
-     *          viewDidLoad: function () {..},
-     *          myNewFunction: function () {..}
-     *          myNewAttribute: ..
+     *          constructor: function MyView (config) {...},
+     *          viewDidLoad: function () {...},
+     *          myNewFunction: function () {...}
+     *          myNewAttribute: ...
      *          ...
      *      };
      */
@@ -128,11 +129,24 @@
     };
 
     /*
-     *  Lifecycle inheritance interface/notification hooks
+     *  Lifecycle event notification hooks
      */
 
     /**
-     *  Function being called on the view itself when the "view did load" event occurs.
+     *  Function being called on the view itself when it has
+     *  finished loading itself and will begin loading its child views.
+     *
+     *  Inherited views may override and implement this function.
+     *
+     *  @method childViewsWillLoad
+     */
+    View.prototype.childViewsWillLoad = function () {
+        // optionally override and implement in inherited view
+    };
+
+    /**
+     *  Function being called on the view itself when it has
+     *  finished loading itself and its child views (recursively).
      *
      *  Inherited views may override and implement this function.
      *
@@ -143,7 +157,8 @@
     };
 
     /**
-     *  Function being called on the view itself when the "view will unload" event occurs.
+     *  Function being called on the view itself immediately
+     *  before itself and its child views will be unloaded.
      *
      *  Inherited views may override and implement this function.
      *
@@ -158,10 +173,33 @@
      */
 
     /**
-     *  Helper function for defining accessors.
+     *  Provides syntactic sugar for defining property accessors (mandatory
+     *  getter and optional setter) to privately stored state.
+     *  It is a single function that:
+     *  - acts as a getter when no argument is provided
+     *  - acts as a setter when at least one argument is provided
      *
-     *  @method defineAccessors
-     *  @param {Mixed} [accessors] Object defining {set: and get:} accessors.
+     *  @method definePropertyAccessors
+     *  @param {String} name Name of the property being defined
+     *                       (used only for throwing associative error messages).
+     *  @param {Mixed} accessors Object defining `{ get: and [set:] }` accessors.
+     *  @example
+     *      var MyView = View.prototype.extend({
+     *          ...
+     *          myState: View.prototype.definePropertyAccessors('myState', {
+     *              get: function () { return this._myPrivateState; },
+     *              set: function (newState) {
+     *                  this._myPrivateState = newState;
+     *              }
+     *          }),
+     *          ...
+     *      };
+     *
+     *      ...
+     *
+     *      var mv = new MyView();
+     *      mv.myState('my new state'); // set
+     *      console.log(mv.myState());  // get
      */
     View.prototype.definePropertyAccessors = function (name, accessors) {
         return function () {
@@ -184,7 +222,10 @@
     };
 
     /**
-     *  Unique name for the view to be distinguished from other views at the same hierarchy level.
+     *  Unique name for the view to be distinguished from other views at
+     *  the same hierarchy level (within the same parent view scope).
+     *  The view will be loaded into a DOM container element thats
+     *  "data-view-name" attribute value matches this name.
      *
      *  @property name
      *  @type String
@@ -199,7 +240,8 @@
     });
 
     /**
-     *  HTML & CSS module/filenames.
+     *  Represents the file location of HTML and CSS resources identified by a requirejs module id.
+     *  Usually the same as the view controller's JavaScript module id but may be overridden.
      *
      *  @property bundle
      *  @type String
@@ -216,28 +258,99 @@
     /**
      *  Parent view up the view hierarchy that "owns" the view.
      *
+     *  - Invoking without an argument returns the current parent view.
+     *  - Invoking with a direct or derived instance of View as an argument establishes
+     *    a parent/child relationship by adding the view to the view hierarchy of the
+     *    specified parent view as a child and loads the view as soon as possible.
+     *  - Invoking with undefined or null removes the view from its current parent view and
+     *    unloads the view if necessary.
+     *
      *  @property parentView
      *  @type View
      *  @default undefined
+     *  @chainable
+     *  @example
+     *      v.parentView();     // get parent view
+     *      v.parentView(pv);   // set parent view
+     *      v.parentView(null); // remove from parent view
      */
     View.prototype.parentView = View.prototype.definePropertyAccessors('parentView', {
         get: function () { return this._parentView; },
-        set: function (parentView) {
-            if (this.isLoaded()) throw new Error(this + '->parentView( ' + parentView + ' ): Cannot change property while view is loaded.');
-            if (this._parentView) this._parentView.removeChildView(this); // remove view from current parent view
-            this._parentView = parentView;
-            if (typeof this._parentView !== 'undefined') {
-                this._parentView._childViews.push(this);
+        set: function (newParentView, _ignoreNotSet) {
+            var self = this;
+
+            if (newParentView) {
+                // New parent view must be an instance of view:
+                if (newParentView instanceof View === false) {
+                    throw new Error(self + '->parentView( ' + newParentView + ' ): Expected a direct or inherited instance of View.');
+                }
+
+                // Check for container element collisions (container elements are first-come-first-serve):
+                newParentView._childViews.forEach(function(childView) {
+                    if (childView.name() === self.name()) {
+                        throw new Error(self + '->parentView( ' + newParentView + ' ): Another child view ' + childView + ' already claims to occupy the same container element.');
+                    }
+                });
+
+                // Unload if necessary and remove from current parent view:
+                if (self._parentView) {
+                    self.parentView(null); // reuse own setter implementation
+                }
+
+                // Establish parent/child relationship:
+                self._parentView = newParentView;
+                self._parentView._childViews.push(self);
+
+                // Load as soon as possible:
+                if (self._parentView.isLoaded()) {
+                    self._load();
+                }
+                // else { it will be loaded by its parent view when (and if) itself is being loaded sometime in the future }
+
+            } else { // invoked with undefined or null
+
+                // It must have a parent view:
+                if (self._parentView) {
+
+                    // It must be a child view of its parent view:
+                    var index = self._parentView._childViews.indexOf(self);
+                    if (index !== -1) {
+
+                        // Unload if necessary and detach parent/child relationship:
+                        if (self.isLoaded()) self._unload();
+                        self._parentView._childViews.splice(index, 1);
+                        self._parentView = null;
+                    } else {
+                        throw new Error('POTENTIAL BUG:' + self + '->parentView( ' + newParentView + ' ): View cannot be detached from its parent view because it\'s not a child view of its parent view ' + self._parentView + '.');
+                    }
+                } else if (_ignoreNotSet === undefined || _ignoreNotSet === false) {
+                    throw new Error(self + '->parentView( ' + newParentView + ' ): View cannot be detached from its parent view because it has no parent view.');
+                }
             }
+            return self;
         }
     });
 
     /**
-     *  Direct child views down the view hierarchy "owned" by the view.
+     *  Child views down the view hierarchy "owned" by the view.
+     *
+     *  - Invoking without an argument returns the current array of child views.
+     *  - Invoking with an array of direct or derived instances of View as an argument
+     *    establishes a parent/child relationship by replacing and unloading any current
+     *    child views in the view hierarchy with those provided and loads those views as
+     *    soon as possible.
+     *  - Invoking with undefined, null or an empty array removes all current child views
+     *    from the view hierarchy and unloads them if necessary.
      *
      *  @property childViews
      *  @type Array of Views
      *  @default []
+     *  @chainable
+     *  @example
+     *      v.childViews();                 // get child views
+     *      v.childViews([cv1, cv2, cv3]);  // set child views
+     *      v.childViews(null);             // remove all child views
+     *      v.childViews([]);               // remove all child views
      */
     View.prototype.childViews = View.prototype.definePropertyAccessors('childViews', {
         get: function () { return this._childViews || []; },
@@ -248,19 +361,42 @@
             self._childViews = self._childViews || [];
             newChildViews = newChildViews || [];
 
-            // Unload and detach existing child views from view hierarchy:
-            self.removeAllChildViews();
+            // New child views must be provided as an array:
+            if (!$.isArray(newChildViews)) {
+                throw new Error(self + '->childViews( ' + newChildViews + ' ): Expected an array.');
+            }
 
-            // Add new child views:
-            $.each(newChildViews, function (index, newChildView) {
-                self.addChildView(newChildView);
-            });
+            if (newChildViews.length > 0) {
+
+                // New child views must be direct or inherited instances of View:
+                var allNewChildViewsAreInstancesOfView = newChildViews.reduce(function (allNewChildViewsAreInstancesOfView, childView) {
+                    return allNewChildViewsAreInstancesOfView && childView instanceof View;
+                }, true);
+                if (!allNewChildViewsAreInstancesOfView) {
+                    throw new Error(self + '->childViews( ' + newChildViews + ' ): Expected an array of direct or inherited instances of View.');
+                }
+
+                // Remove current child views:
+                self.childViews([]); // reuse own setter implementation
+
+                // Add new child views:
+                $.each(newChildViews, function (index, newChildView) {
+                    newChildView.parentView(self); // reuse parentView setter implementation
+                });
+
+            } else { // invoked with undefined, null or []
+
+                // Unload and remove all existing child views from the view
+                // hierarchy by reusing the parentView setter implementation:
+                while (self.childViews().length > 0) {
+                    self.childViews()[0].parentView(null); // reuse parentView setter implementation
+                }
+            }
         }
     });
 
     /**
      *  Determines whether the view is the first view in a view hierarchy and therefore has no parent view.
-     *  This is a purely calculated property.
      *
      *  @property isRootView
      *  @type Boolean
@@ -271,7 +407,6 @@
 
     /**
      *  Determines whether the view's DOM is currently loaded.
-     *  This is a purely calculated property.
      *
      *  @property isLoaded
      *  @readOnly
@@ -282,16 +417,67 @@
             return this._containerElement !== undefined && this._containerElement.length > 0;
         }
     });
-
     /**
-     *  Subscription for "view did load" events.
+     *  Notification subscription being fired when the view has finished loading itself
+     *  and will begin loading its child views.
+     *
+     *  The getter returns an object providing the following interface:
+     *  - `subscribe:|unsubscribe:` adds or removes a callback subscription
+     *  - `once:` registers a one-time fired callback
+     *  - `promise:` returns a one-time resolved promise
+     *  - `once:|promise:` do essentially the same thing but differ in the style
+     *                     of interface exposed to the caller (callback/promise)
      *
      *  @property onViewDidLoad
      *  @type Mixed
      *  @default {
-     *               subscribe: Function
-     *               unsubscribe: Function
-     *               once: Function
+     *               subscribe: Function,
+     *               unsubscribe: Function,
+     *               once: Function,
+     *               promise: Function
+     *           }
+     */
+    View.prototype.onChildViewsWillLoad = View.prototype.definePropertyAccessors('onChildViewsWillLoad', {
+        get: function () {
+            var self = this;
+            self._onChildViewsWillLoadCallbacks = self._onChildViewsWillLoadCallbacks || $.Callbacks();
+            return {
+                subscribe: self._onChildViewsWillLoadCallbacks.add,
+                unsubscribe: self._onChildViewsWillLoadCallbacks.remove,
+                once: function(callback) {
+                    var wrap;
+                    self._onChildViewsWillLoadCallbacks.add( wrap = function() {
+                        self._onChildViewsWillLoadCallbacks.remove(wrap);
+                        callback.call(this);
+                    });
+                },
+                promise: function() {
+                    var childViewsWillLoad = new $.Deferred();
+                    self.onChildViewsWillLoad().once(function() { childViewsWillLoad.resolve(); });
+                    return childViewsWillLoad.promise();
+                }
+            };
+        }
+    });
+
+    /**
+     *  Notification subscription being fired when the view has finished loading itself
+     *  and its child views (recursively).
+     *
+     *  The getter returns an object providing the following interface:
+     *  - `subscribe:|unsubscribe:` adds or removes a callback subscription
+     *  - `once:` registers a one-time fired callback
+     *  - `promise:` returns a one-time resolved promise
+     *  - `once:|promise:` do essentially the same thing but differ in the style
+     *                     of interface exposed to the caller (callback/promise)
+     *
+     *  @property onViewDidLoad
+     *  @type Mixed
+     *  @default {
+     *               subscribe: Function,
+     *               unsubscribe: Function,
+     *               once: Function,
+     *               promise: Function
      *           }
      */
     View.prototype.onViewDidLoad = View.prototype.definePropertyAccessors('onViewDidLoad', {
@@ -301,31 +487,39 @@
             return {
                 subscribe: self._onViewDidLoadCallbacks.add,
                 unsubscribe: self._onViewDidLoadCallbacks.remove,
-                once: function(callback){
+                once: function(callback) {
                     var wrap;
-                    self._onViewDidLoadCallbacks.add( wrap = function(){
+                    self._onViewDidLoadCallbacks.add( wrap = function() {
                         self._onViewDidLoadCallbacks.remove(wrap);
                         callback.call(this);
                     });
                 },
-                promise: function(){
-                    var dfrd = new $.Deferred();
-                    self.onViewDidLoad().once(function(){ dfrd.resolve(); });
-                    return dfrd.promise();
+                promise: function() {
+                    var viewDidLoad = new $.Deferred();
+                    self.onViewDidLoad().once(function() { viewDidLoad.resolve(); });
+                    return viewDidLoad.promise();
                 }
             };
         }
     });
 
     /**
-     *  Subscription for "view will unload" events.
+     *  Notification subscription being fired immediately before the view and its child views will be unloaded.
+     *
+     *  The getter returns an object providing the following interface:
+     *  - `subscribe:|unsubscribe:` adds or removes a callback subscription
+     *  - `once:` registers a one-time fired callback
+     *  - `promise:` returns a one-time resolved promise
+     *  - `once:|promise:` do essentially the same thing but differ in the style
+     *                     of interface exposed to the caller (callback/promise)
      *
      *  @property onViewWillUnload
      *  @type Mixed
      *  @default {
-     *               subscribe: Function
-     *               unsubscribe: Function
-     *               once: Function
+     *               subscribe: Function,
+     *               unsubscribe: Function,
+     *               once: Function,
+     *               promise: Function
      *           }
      */
     View.prototype.onViewWillUnload = View.prototype.definePropertyAccessors('onViewWillUnload', {
@@ -335,17 +529,17 @@
             return {
                 subscribe: self._onViewWillUnloadCallbacks.add,
                 unsubscribe: self._onViewWillUnloadCallbacks.remove,
-                once: function(callback){
+                once: function(callback) {
                     var wrap;
-                    self._onViewWillUnloadCallbacks.add( wrap = function(){
+                    self._onViewWillUnloadCallbacks.add( wrap = function() {
                         self._onViewWillUnloadCallbacks.remove(wrap);
                         callback.call(this);
                     });
                 },
-                promise: function(){
-                    var dfrd = new $.Deferred();
-                    self.onViewWillUnload().once(function(){ dfrd.resolve(); });
-                    return dfrd.promise();
+                promise: function() {
+                    var viewWillUnload = new $.Deferred();
+                    self.onViewWillUnload().once(function() { viewWillUnload.resolve(); });
+                    return viewWillUnload.promise();
                 }
             };
         }
@@ -356,11 +550,11 @@
      */
 
     /**
-     *  The jQuery DOM Node containing the ui of the view.
+     *  The jQuery DOM element containing the UI of the view.
      *
      *  @property _containerElement
-     *  @private
      *  @type jQuery Element
+     *  @private
      */
     View.prototype._containerElement;
 
@@ -369,111 +563,19 @@
      */
 
     /**
-     *  Sets the view as a root view and loads it (together with its child views if present)
+     *  Sets the view as a root view and loads it together with its child views if present.
      *
      *  @method setAsRootView
-     *  @return {Promise} a jQuery Promise which will be resolved when the view and its descendants are loaded.
+     *  @chainable
      */
     View.prototype.setAsRootView = function () {
         var self = this;
 
-        if (self.isRootView() === false){
-            throw('[View.prototype.setAsRootView] Error setting '+self.constructor.name+' as root view. ParentView is not undefined (it is '+self._parentView+')');
+        if (self.isRootView() === false) {
+            throw new Error(self + '->setAsRootView(): View cannot be a root view because it has ' + self._parentView + ' set as its parent view.');
         }
 
         self._load();
-    };
-
-    /**
-     *  Adds a view to the view hierarchy as a direct child. Does not actually load the child view.
-     *
-     *  @method addChildView
-     *  @param {View} newChildView Child view to be added.
-     *  @return {Promise} jQuery Promise to be resolved when the childview loads.
-     */
-    View.prototype.addChildView = function (newChildView) {
-        var self = this;
-
-        self._childViews.forEach(function(childView){
-            if (childView.name() === newChildView.name()){
-                throw new Error(self + '->addChildView( ' + newChildView + ' ): Another child view ' + childView + ' already occupies the same view container.');
-            }
-        });
-
-        // Connect parent/child relationship:
-        newChildView.parentView(self);
-
-        var childViewDidLoad = new $.Deferred();
-
-        newChildView.onViewDidLoad().once(function(){
-            childViewDidLoad.resolve();
-        });
-
-        if (self.isLoaded()) {
-            newChildView._load();
-        } // else { it will be loaded by its parent view when (and if) she gets loaded }
-        return childViewDidLoad.promise();
-    };
-
-    /**
-     *  Removes a direct child view from the view hierarchy. Unloads the child view if necessary.
-     *
-     *  @method removeChildView
-     *  @param {View} childView Child view to be removed.
-     *  @return {View} This view (parent view).
-     */
-    View.prototype.removeChildView = function (childView) {
-        var self = this;
-
-        var index = self._childViews.indexOf(childView);
-
-        // If childView is in fact a child view:
-        if (index !== -1) {
-
-            // Unload from DOM:
-            childView._unload();
-
-            // Detach parent/child relationship:
-            childView._parentView = undefined;
-            self._childViews.splice(index, 1);
-        } else {
-            // Throw an error if the view is not a child view:
-            throw new Error(self + '->removeChildView( ' + childView + ' ): View is not a child view.');
-        }
-        return self;
-    };
-
-    /**
-     *  Removes all direct child view from the view hierarchy. Unloads child views if necessary.
-     *
-     *  @method removeAllChildViews
-     *  @return {View} This view (parent view).
-     */
-    View.prototype.removeAllChildViews = function () {
-        var self = this;
-
-        // Unload and detach child->parent references:
-        $.each(self._childViews, function (index, existingChildView) {
-            existingChildView._unload();
-            existingChildView._parentView = undefined;
-        });
-        // Detach parent->child references:
-        self._childViews.length = 0;
-        return self;
-    };
-
-    /**
-     *  Removes the view from the parent view hierarchy (behaves the same as removeChildView). Unloads the view if necessary.
-     *
-     *  @method removeFromParentView
-     *  @return {View} This view (child view).
-     */
-    View.prototype.removeFromParentView = function () {
-        var self = this;
-        if (self._parentView === undefined) {
-            throw new Error(self + '->removeFromParentView(): View has no parent view.');
-        }
-        self._parentView.removeChildView(self);
         return self;
     };
 
@@ -486,15 +588,15 @@
      *
      *  @method $
      *  @param {String} [selector] jQuery selector being scoped to the root element.
-     *  @return {jQuery Element} Root element of a loaded view if invoked without a parameter,
-     *                           scoped jQuery selection result if invoked with a selector
+     *  @return {jQuery Element} Root element of a loaded view if invoked without an argument,
+     *                           scoped jQuery selection result if invoked with a selector.
      *  @throws {ViewIsNotLoaded} If the view is not loaded.
      */
     View.prototype.$ = function (selector) {
         var self = this;
         if (self.isLoaded() === false) {
             throw new Error(self + '->$("' + selector + '"): View is not loaded.');
-        } else if (selector === undefined){
+        } else if (selector === undefined) {
             return self._containerElement.children();
         }
         var viewElement = self._containerElement.children();
@@ -504,91 +606,90 @@
     };
 
     /**
-     *  Loads markup and styles from HTML and CSS files specified by the bundle property into the container element identified by the name property.
+     *  Loads markup and styles from HTML and CSS files specified by the bundle
+     *  property into the container element identified by the name property.
      *
      *  @method _load
+     *  @private
      */
     View.prototype._load = function () {
         var self = this;
 
-        // Skip if parent view is not loaded yet:
+        // Parent view must be set and loaded:
         if (self.parentView() && !self.parentView().isLoaded()) {
             throw new Error(self + '->load(): Parent view is not loaded yet.');
         }
 
-        // A unique name must be configured so that the view instance can be distinguished from other views at the same hierarchy level:
+        // Name must be configured so that the view instance can be
+        // distinguished from other views at the same hierarchy level:
         if (!self.name()) {
-            throw new Error(self + '->load(): Container Name not specified.');
+            throw new Error(self + '->load(): Container element name not specified.');
         }
 
-        // A bundle must be configured (it must match a valid requirejs module id later on):
+        // Bundle must be configured (it must match a valid requirejs module id later on):
         if (!self.bundle()) {
             throw new Error(self + '->load(): (HTML/CSS)-bundle not specified.');
         }
 
-        if (self.isLoaded()){
+        // Views cannot be reloaded:
+        // TODO: check if this should be true
+        if (self.isLoaded()) {
             throw new Error(self + '->load(): Cannot load, view already loaded.');
-            //self._unload();
         }
 
+        // Get the container element:
         var containerElementSelector = '[data-view-name="' + self.name() + '"]';
-        var containerElement = ( self.parentView() ?
-            self.parentView().$(containerElementSelector)
-                :
-            $ (containerElementSelector));
+        var containerElement = ( self.isRootView() ? $(containerElementSelector) : self.parentView().$(containerElementSelector) );
 
-        // In order for a view to get loaded, a valid container element must be existent:
+        // Container element must be existent:
         if (containerElement.length === 0) {
-            throw new Error(self + '->load(): Container element not specified or not existent.');
+            throw new Error(self + '->load(): Specified container element [data-view-name="' + self.name() + '"] does not exist.');
         }
 
+        // Root views must load into root-level containers:
         if (self.isRootView() && containerElement.parents('[data-view-name]').length) {
-            throw new Error(self + '->load(): the container of a Root View cannot be inside another View');
+            throw new Error(self + '->load(): The container of a root view cannot be inside another view.');
         }
 
-
-        // Load equally named HTML markup and CSS stylesheet files via require loader plugins (they can only be loaded paired/they must have the same file name):
+        // Load equally named HTML markup and CSS stylesheet files via require loader plugins
+        // (they can only be loaded paired/they must have the same file name):
         require(['html!' + self.bundle() + '.html', 'css!' + self.bundle()], function (html, css) {
-
-            // As isLoaded() checks if containerElement is defined, it must be set when the view actually loaded.
-            // It is actually still not fully loaded, but if a childView were to be added after this function
-            // finishes but before the childviews are fully loaded, addChildView must also call _load (and it
-            // only does it if isLoaded == true)
             self._containerElement = containerElement;
             self._containerElement.html(html);
 
-            // TODO: add onChildViewsWillLoad.
+            // Fire "child views will load" notification on subscribed stakeholders:
+            self._onChildViewsWillLoadCallbacks.fireWith(self);
 
-            // Load child views recursively and prepare the array of "child did load" deferreds
+            // Load child views recursively and prepare the array of child "view did load" promises:
             var childViewsDidLoad = $.map(self.childViews(), function (childView) {
-                var deferred = new $.Deferred();
-                childView.onViewDidLoad().once(function(){
-                    deferred.resolve();
-                });
+                var childViewDidLoad = childView.onViewDidLoad().promise();
                 childView._load();
-                return deferred;
+                return childViewDidLoad;
             });
 
-            $.when.apply($, childViewsDidLoad).then(function(){
-                // Call "did load" notification on self and on subscribed stakeholders:
+            $.when.apply($, childViewsDidLoad).then(function() {
+                // Fire "view did load" notification on subscribed stakeholders:
                 self._onViewDidLoadCallbacks.fireWith(self);
             });
         });
     };
 
     /**
-     *  Unloads the DOM by restoring the originally occupied container element.
+     *  Unloads the DOM from the occupied container element.
      *
-     *  @method unload
+     *  @method _unload
+     *  @private
      */
     View.prototype._unload = function () {
         var self = this;
 
+        // Only loaded views can be unloaded:
+        // TODO: check if this should be true
         if (self.isLoaded() === false) {
             throw new Error(self + ' -> Cannot be unloaded since it is not loaded.');
         }
 
-        // Call "will unload" notification on self and on subscribed stakeholders:
+        // Fire "view will unload" notification on subscribed stakeholders:
         self._onViewWillUnloadCallbacks.fireWith(self);
 
         // Unload child views recursively down the view hierarchy:
@@ -606,7 +707,7 @@
      */
 
     /**
-     *  Provides a human readable string representation of a view.
+     *  Provides a human readable string representation of the view.
      *
      *  @method toString
      *  @return {String} String representation of the view.
@@ -618,17 +719,18 @@
         var self = this;
         var str = '[' + self.constructor.name + (self.constructor.name === self.bundle() ? '' : '&' + self.bundle());
         str += '@' + self.getPathInHierarchy();
-        str += (self.isLoaded()) ? ':loaded' : ':!loaded';
+        str += self.isLoaded() ? ':loaded' : ':!loaded';
         str += ']';
         return str;
     };
 
     /**
-     *  Recursively traverses down the child view hierarchy of a view while invoking
+     *  Recursively traverses down the child view hierarchy of the view while invoking
      *  a function for each view passing it the view and the recursion level.
      *
      *  @method traverse
-     *  @param {Function} fn Function being invoked for each view and being passed the view object and the recursion level.
+     *  @param {Function} fn Function being invoked for each view and being
+     *                       passed the view object and the recursion level.
      *  @param {Number} level Indicates the current level of recursion.
      */
     View.prototype.traverse = function (fn, level) {
@@ -692,4 +794,4 @@
 
     // Return the constructor as the module value:
     return View;
-}));
+});
