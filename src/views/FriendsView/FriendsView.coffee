@@ -4,9 +4,9 @@ define [
     'Library/ListView'
     'Library/ButtonView'
     'DialerView'
-    'DebtCreateView'
+    'FriendEntryView2'
     'module'
-], (View, PouchDB, ListView, ButtonView, DialerView, DebtCreateView, FriendsViewModule) ->
+], (View, PouchDB, ListView, ButtonView, DialerView, FriendEntryView2, FriendsViewModule) ->
 
     class FriendsView extends View
         constructor: (config) ->
@@ -71,7 +71,7 @@ define [
                             label: friend
                             onRelease: =>
                                 @.parentView().showNowOrNever
-                                    view: new DebtCreateView
+                                    view: new FriendEntryView2
                                     transitionStyle: 'fromRight'
 
                 @dialer.buttons.forEach (button) =>

@@ -56,7 +56,6 @@ define ->
             'FriendEntryView1': 'views/FriendEntryView1/FriendEntryView1'
             'FriendEntryView2': 'views/FriendEntryView2/FriendEntryView2'
             'FriendEntryView3': 'views/FriendEntryView3/FriendEntryView3'
-            'DebtCreateView': 'views/DebtCreateView/DebtCreateView'
 
         shim:
             'iscroll':
